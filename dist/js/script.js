@@ -93,8 +93,7 @@ window.addEventListener('DOMContentLoaded', () => {
 //Create Modal Window
 
     const   modWin = document.querySelector('.modal'),
-            modBtn = document.querySelectorAll('[data-modal]'),
-            modClose = document.querySelector('[data-close]');
+            modBtn = document.querySelectorAll('[data-modal]');
 
     function modalOpen() {
     // modWin.style.display = 'flex';       // 1 способ смены стилей Css
@@ -121,12 +120,9 @@ window.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', modalOpen);
     });
     
-    // Закрыть модальное окно
-    modClose.addEventListener('click', modalClose); 
-
-    // Закрытие модального окна кликом на пустое пространство вокруг модального окна
+    // Закрытие модального окна кликом на пустое пространство вокруг модального окна и при нажатии на крестик
     modWin.addEventListener('click', (e) => {
-        if (e.target === modWin) {
+        if (e.target === modWin || e.target.getAttribute('[data-close]' == '')) {
             modalClose();
         }
     });
@@ -141,7 +137,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
    
     //Появление модального окна через определенное количество времени
-    // const modalTimerId = setTimeout(modalOpen, 3000);
+    const modalTimerId = setTimeout(modalOpen, 50000);
 
 
     // Появление модального окна при скроле до конца страницы
@@ -238,7 +234,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const forms = document.querySelectorAll('form');
 
     const message = {
-        loading: 'Загрузка',
+        loading: 'img/form/spinner.svg', //добавляем изображение вместо текста
         success: 'Спасибо! Скоро мы с Вами свяжемся',
         failure: 'Что то пошло не так...'
     }
@@ -251,10 +247,15 @@ window.addEventListener('DOMContentLoaded', () => {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            const statusMessage = document.createElement('div');
-            statusMessage.classList.add('status');
-            statusMessage.textContent = message.loading;
-            form.append(statusMessage);
+            // statusMessage окно загрузки обработки запроса
+            const statusMessage = document.createElement('img'); // изменяем div на img
+            statusMessage.src = message.loading; //меняем путь 
+            //задаем стиль изображению
+            statusMessage.style.cssText = `  
+                display: block;
+                margin: 0 auto;
+            `;
+            form.insertAdjacentElement('afterend', statusMessage); // изображение будет появлятся после формы
 
             const request = new XMLHttpRequest();
             request.open('POST', 'server.php');
@@ -274,17 +275,41 @@ window.addEventListener('DOMContentLoaded', () => {
             request.addEventListener('load', () => {
                 if (request.status ===200) {
                     console.log(request.response);
-                    statusMessage.textContent = message.success;
+                    showThanksModal(message.success);
                     form.reset(); // сброс формы
-                    // удаляет сообщение статуса формы через 2 секунды
-                    setTimeout(() => {
-                        statusMessage.remove();
-                    }, 2000);
+                    // удаляет сообщение статуса формы
+                    statusMessage.remove();
                 } else {
-                    statusMessage.textContent = message.failure;
+                    showThanksModal(message.failure);
                 }
             });
         });
+    }
+
+    function showThanksModal(message) {
+        const prevModalDilog = document.querySelector('.modal__dialog');
+
+        prevModalDilog.classList.add('hide');
+        modalOpen();
+
+        const thanksModal = document.createElement('div');
+        thanksModal.classList.add('modal__dialog');
+        thanksModal.innerHTML = `
+            <div class="modal__content">
+                <div data-close class="modal__close">×</div>
+                <div class="modal__title">${message}</div>
+            </div>
+        `;
+        
+        //Добавление нового модального окна
+        document.querySelector('.modal').append(thanksModal);
+
+        setTimeout(() => {
+            thanksModal.remove();
+            prevModalDilog.classList.add('show');
+            prevModalDilog.classList.remove('hide');
+            modalClose();
+        }, 3000);
     }
 
 }); 
